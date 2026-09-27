@@ -88,6 +88,7 @@ nav button:disabled{opacity:.45;cursor:default}
     <button data-room="navata">Navata</button>
     <button data-room="cripta">Cripta</button>
     <button data-room="campanile">Campanile</button>
+    <button data-room="cunicolo">Cunicolo</button>
   </nav>
   <div class="scene" id="scene"></div>
   <div class="msg" id="msg" aria-live="polite"></div>
@@ -165,7 +166,7 @@ $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal()
 function showNote(){
   openModal(`<h2>Foglietto del sagrestano</h2>
   <div class="note">Promemoria per chi resta chiuso dentro (capita).<br><br>
-  Salire in torre e suonare il <b>segnale di Bartolo</b>: il paese lo conosce e viene ad aprire.<br><br>
+  Salire in torre e suonare il <b>segnale di Bartolo</b>. Lui diceva che "apre una via che il paese ha dimenticato". Non l'ho mai provato.<br><br>
   Bartolo lo ha inciso sulla sua tomba, in cripta, ma coi suoi segni: la <b>croce</b> è la Grossa, il <b>quadrato</b> la Mezzana, il <b>cerchio</b> la Piccola.<br><br>
   La chiave della torre la teneva lui, sotto chi regge le chiavi del cielo.</div>
   <div class="btnrow"><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
@@ -406,6 +407,40 @@ ${[['G',180,1.0,'Grossa'],['M',80,.72,'Mezzana'],['P',288,.56,'Piccola']].map(([
 </g>
 </svg>`;
 
+SC.cunicolo=()=>`
+<svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cunicolo sotterraneo">
+<defs>
+ <radialGradient id="tl" cx=".5" cy=".3" r=".9"><stop offset="0" stop-color="#5a4a30"/><stop offset=".5" stop-color="#2a2418"/><stop offset="1" stop-color="#0a0908"/></radialGradient>
+ <linearGradient id="wat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2b4a"/><stop offset="1" stop-color="#0d1a33"/></linearGradient>
+</defs>
+<rect width="360" height="400" fill="url(#tl)"/>
+<path d="M40 260 V120 A140 140 0 0 1 320 120 V260" fill="none" stroke="#3a3128" stroke-width="10"/>
+<path d="M90 260 V150 A90 90 0 0 1 270 150 V260" fill="none" stroke="#2a2418" stroke-width="6"/>
+<!-- scivolo -->
+<path d="M0 60 Q120 110 150 250" fill="none" stroke="#5b5148" stroke-width="18" stroke-linecap="round"/>
+<path d="M0 60 Q120 110 150 250" fill="none" stroke="#3a3128" stroke-width="10" stroke-linecap="round"/>
+<!-- acqua -->
+<rect y="250" width="360" height="150" fill="url(#wat)"/>
+<g stroke="#3b5a9a" stroke-width="1.5" opacity=".5" fill="none"><path d="M0 275 Q30 270 60 275 T120 275 T180 275 T240 275 T300 275 T360 275"/><path d="M0 310 Q30 305 60 310 T120 310 T180 310 T240 310 T300 310 T360 310"/><path d="M0 350 Q30 345 60 350 T120 350 T180 350 T240 350 T300 350 T360 350"/></g>
+<!-- anello a muro -->
+<rect x="330" y="230" width="14" height="24" fill="#5b5148"/><circle cx="337" cy="242" r="5" fill="none" stroke="#8a8c92" stroke-width="3"/>
+<!-- barca -->
+<g id="boat" style="transition:transform 3s ease-in;${S.f.untied?'transform:translateX(-420px)':''}">
+ <line id="rope" x1="245" y1="292" x2="337" y2="243" stroke="#c8a86a" stroke-width="2.5" ${S.f.untied?'display="none"':''}/>
+ <path d="M110 290 Q120 330 180 332 Q240 330 250 290 Z" fill="#5c3a22" stroke="#3a2414" stroke-width="2"/>
+ <path d="M116 296 H244" stroke="#7a5230" stroke-width="3"/>
+ <rect x="150" y="300" width="60" height="6" fill="#3a2414"/>
+ <line x1="230" y1="250" x2="228" y2="300" stroke="#8a7a60" stroke-width="3"/>
+ <g class="hs" data-hs="nodo" tabindex="0" role="button" aria-label="Nodo della cima">
+  <circle cx="245" cy="292" r="7" fill="#c8a86a" stroke="#8a6a3a" stroke-width="2" ${S.f.untied?'display="none"':''}/>
+  <rect class="ring" x="230" y="276" width="34" height="32" rx="8"/>
+ </g>
+ <ellipse cx="180" cy="334" rx="72" ry="6" fill="#0d1a33" opacity=".8"/>
+</g>
+<!-- candela -->
+<g><rect x="326" y="368" width="10" height="26" fill="#f6efe1"/><ellipse cx="331" cy="362" rx="5" ry="10" fill="#ffd25e"/><ellipse cx="331" cy="365" rx="2" ry="5" fill="#fff7d6"/></g>
+</svg>`;
+
 /* ---------- INTERAZIONI ---------- */
 const ACT={
  navata:{
@@ -452,36 +487,42 @@ function ring(b){
   const names={G:'Grossa',M:'Mezzana',P:'Piccola'};
   say('Campana '+names[b], 'Rintocchi: '+S.rings.map(x=>names[x][0]).join(' · ')+`<div class="dots">${[...Array(6)].map((_,i)=>`<span class="${i<S.rings.length?'on':''}"></span>`).join('')}</div>`);
   if(S.rings.length===6){
-    if(S.rings.join('')===TARGET.join('')){ setTimeout(win,900); }
+    if(S.rings.join('')===TARGET.join('')){ setTimeout(trapdoor,900); }
     else if(S.f.tomb){ setTimeout(()=>{ S.rings=[]; say('Silenzio','I sei rintocchi si spengono sulla valle. Nessuno risponde. Non era il segnale.'); },1200); }
   }
   save();
 }
+function trapdoor(){
+  S.f.trap=true; S.rings=[]; save(); sfx.tone(90,.8,'triangle',.2);
+  openModal(`<div class="title"><h2>Il pavimento cede.</h2><p>Sotto la Grossa, una botola che nessuno aveva mai visto.</p></div>
+  <p>Scivoli lungo uno scivolo di pietra levigata, la candela stretta in mano, e atterri sulla sabbia umida di un cunicolo. Rumore d'acqua che scorre nel buio.</p>
+  <div class="btnrow"><button class="btn primary" onclick="closeModal(); S.room='cunicolo'; render(); say('Cunicolo','Un canale sotterraneo, una piccola barca legata a un anello nel muro. La corrente va verso il buio.')">Scendi</button></div>`);
+}
 function win(){
   S.f.won=true; save();
-  openModal(`<div class="title"><h2>Il paese ha sentito.</h2><p>Dal basso, un catenaccio che scorre e una voce che chiama.</p></div>
-  <p>Il sagrestano è sulla soglia con la lanterna e un pezzo di pane in mano. «Il segnale di Bartolo. Da trent'anni non lo sentivo.» Ti fa strada fuori, nel fresco della sera, senza fare domande.</p>
-  <div class="btnrow"><button class="btn" onclick="closeModal()">Resta ancora un po'</button><button class="btn primary" onclick="resetGame()">Gioca ancora</button></div>`);
+  openModal(`<div class="title"><h2>La barca si avvia.</h2><p>La pieve resta alle tue spalle, sopra la roccia.</p></div>
+  <p>La candela illumina volte basse e acqua nera. Il cunicolo si allarga, poi si biforca. Bartolo diceva che il paese aveva dimenticato questa via: forse anche dove porta.</p>
+  <div class="btnrow"><button class="btn" onclick="resetGame()">Gioca ancora</button><button class="btn primary" onclick="location.href='https://escaperoomlabirinto.netlify.app/'">Prosegui l'avventura</button></div>`);
 }
 
 function render(){
-  document.querySelectorAll('#nav button').forEach(b=>{ const r=b.dataset.room; b.setAttribute('aria-current', r===S.room?'true':'false'); b.disabled=(r==='campanile'&&!S.f.tower); });
+  document.querySelectorAll('#nav button').forEach(b=>{ const r=b.dataset.room; b.setAttribute('aria-current', r===S.room?'true':'false'); b.disabled=(r==='campanile'&&!S.f.tower)||(r==='cunicolo'&&!S.f.trap); });
   $('#scene').innerHTML=SC[S.room]();
   document.querySelectorAll('.hs').forEach(h=>{ const f=()=>{ ac(); (ACT[S.room][h.dataset.hs]||(()=>{}))(); }; h.addEventListener('click',f); h.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); f(); } }); });
   save();
 }
-document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ const r=b.dataset.room; if(r==='cripta'&&!has('candela')){ S.room='cripta'; render(); say('Cripta','Scendi due gradini nel buio e ti fermi. Senza una luce, qui non si combina niente.'); return; } S.room=r; render(); sfx.click(); const intro={navata:'Navata', cripta:'Cripta', campanile:'Cella campanaria'}; const txt={navata:'Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.', cripta:'La candela allarga un cerchio di luce sulle volte basse. Tre statue, una tomba, aria ferma.', campanile:'Tre campane appese a una trave di castagno. Dalle bifore, la valle al buio.'}; if(!(r==='cripta'&&!has('candela'))) say(intro[r],txt[r]); });
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ const r=b.dataset.room; if(r==='cripta'&&!has('candela')){ S.room='cripta'; render(); say('Cripta','Scendi due gradini nel buio e ti fermi. Senza una luce, qui non si combina niente.'); return; } S.room=r; render(); sfx.click(); const intro={navata:'Navata', cripta:'Cripta', campanile:'Cella campanaria', cunicolo:'Cunicolo'}; const txt={navata:'Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.', cripta:'La candela allarga un cerchio di luce sulle volte basse. Tre statue, una tomba, aria ferma.', campanile:'Tre campane appese a una trave di castagno. Dalle bifore, la valle al buio.', cunicolo:'Un canale sotterraneo, una piccola barca legata a un anello nel muro. La corrente va verso il buio.'}; if(!(r==='cripta'&&!has('candela'))) say(intro[r],txt[r]); });
 
 /* ---------- AVVIO ---------- */
 function intro(){
   openModal(`<div class="title"><h2>Chiusi nella Pieve</h2><p>Una sera di settembre, in Garfagnana</p></div>
   <p>Ti eri seduto sull'ultima panca per riposare le gambe. Quando riapri gli occhi la Pieve di San Michele è vuota, il portone è chiuso e la luce dalle vetrate è quella della sera.</p>
-  <p>Il paese è a mezzo chilometro. Qualcuno dovrà pur sentirti.</p>
+  <p>Il paese è a mezzo chilometro. Ma una pieve vecchia otto secoli ha più di una uscita.</p>
   <div class="btnrow"><button class="btn primary" onclick="closeModal(); startMsg()">Guardati intorno</button></div>`);
 }
 function startMsg(){ ac(); say('Navata','Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.'); }
 const resumed=load();
-if(S.f.won){ S.f.won=false; }
+if(S.f.won){ S.f.won=false; S.f.untied=false; S.room='cunicolo'; }
 render(); renderInv();
 if(resumed && (S.inv.length||Object.keys(S.f).length)){ say('Bentornato','Riprendi da dove eri rimasto. Il portone è ancora chiuso.'); }
 else intro();
