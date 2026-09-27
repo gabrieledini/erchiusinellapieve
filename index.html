@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chiusi nella Pieve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --stone:#7A7F86; --stone-dk:#4A4E55; --marble:#E9DFC8; --wax:#F6EFE1;
+  --amber:#E8A33C; --amber-dk:#B6731C; --night:#1C2B4A; --night-dk:#101a30;
+  --cotto:#A3562F; --wood:#5C3A22; --ink:#2A2620;
+  --bg:#F1EADB; --panel:#FBF7EE; --text:#2A2620; --muted:#6E665A; --line:#D9CFB8;
+  --accent:#B6731C; --accent-ink:#fff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#171410; --panel:#221d17; --text:#EDE4D2; --muted:#A79B86; --line:#3A3128; --accent:#E8A33C; --accent-ink:#1a1408;
+}}
+:root[data-theme="dark"]{ --bg:#171410; --panel:#221d17; --text:#EDE4D2; --muted:#A79B86; --line:#3A3128; --accent:#E8A33C; --accent-ink:#1a1408; }
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"Source Sans 3",system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:baseline;justify-content:space-between;padding:12px 16px 6px}
+header h1{font-family:Fraunces,serif;font-weight:500;font-size:1.05rem;margin:0;letter-spacing:.01em}
+header button{background:none;border:0;color:var(--muted);font:inherit;font-size:.85rem;padding:4px 0;cursor:pointer}
+nav{display:flex;gap:6px;padding:0 16px 8px}
+nav button{flex:1;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:.9rem;padding:8px 4px;border-radius:999px;cursor:pointer}
+nav button[aria-current="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+nav button:disabled{opacity:.45;cursor:default}
+.scene{margin:0 12px;border-radius:18px;overflow:hidden;background:var(--night-dk);aspect-ratio:9/10;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.scene svg{width:100%;height:100%;display:block}
+.hs{cursor:pointer}
+.hs:focus-visible{outline:none}
+.hs:focus-visible .ring, .hs:hover .ring{opacity:1}
+.ring{opacity:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:4 4;transition:opacity .2s}
+.hint-mode .ring{opacity:.9}
+.msg{margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:74px;font-size:1rem}
+.msg strong{font-family:Fraunces,serif;font-weight:500;font-size:1.05rem;display:block;margin-bottom:2px}
+.inv{display:flex;gap:8px;overflow-x:auto;padding:10px 12px 14px;scrollbar-width:none}
+.inv::-webkit-scrollbar{display:none}
+.inv:empty::before{content:"Tasche vuote.";color:var(--muted);font-size:.9rem;padding:8px 4px}
+.item{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;font-size:.9rem;color:var(--text);cursor:pointer}
+.item .ic{font-size:1.2rem}
+.item.new{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+/* overlay / modal */
+.modal{position:fixed;inset:0;background:rgba(10,8,5,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal[hidden]{display:none}
+.card{background:var(--panel);color:var(--text);border-radius:18px;padding:20px;width:min(100%,400px);max-height:85vh;overflow:auto;border:1px solid var(--line)}
+.card h2{font-family:Fraunces,serif;font-weight:500;margin:0 0 10px;font-size:1.35rem}
+.card p{margin:0 0 10px}
+.note{font-family:Fraunces,serif;font-style:italic;font-size:1.05rem;line-height:1.5;background:var(--wax);color:var(--ink);padding:14px 16px;border-radius:8px;box-shadow:inset 0 0 0 1px #d9cfb8}
+.epig{font-family:Fraunces,serif;letter-spacing:.12em;text-align:center;font-size:1.05rem;color:var(--ink);background:var(--marble);padding:16px;border-radius:6px;line-height:1.9}
+.btnrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:.95rem;padding:10px 16px;border-radius:999px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn:focus-visible,.item:focus-visible,nav button:focus-visible,header button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.dials{display:flex;justify-content:center;gap:10px;margin:10px 0 4px}
+.dial{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dial button{width:44px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:1.1rem;cursor:pointer}
+.dial .v{font-family:Fraunces,serif;font-size:2rem;font-weight:500;width:44px;text-align:center;background:var(--wood);color:var(--marble);border-radius:6px;line-height:1.5}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:6px}
+.dots span{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--amber);opacity:.5}
+.dots span.on{background:var(--amber);opacity:1}
+.title{ text-align:center;padding:18px 8px 6px}
+.title h2{font-family:Fraunces,serif;font-weight:300;font-size:2.4rem;line-height:1.05;margin:0 0 6px}
+.title p{color:var(--muted);margin:0 0 6px}
+.swing{transform-origin:top center}
+@keyframes swingA{0%{transform:rotate(0)}25%{transform:rotate(-9deg)}55%{transform:rotate(7deg)}80%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
+.swing.ring-anim{animation:swingA .9s ease-out}
+@media (prefers-reduced-motion: reduce){ .swing.ring-anim,.item.new,.shake{animation:none} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Chiusi nella Pieve</h1>
+    <button id="btnHelp" type="button">Aiuto</button>
+  </header>
+  <nav id="nav">
+    <button data-room="navata">Navata</button>
+    <button data-room="cripta">Cripta</button>
+    <button data-room="campanile">Campanile</button>
+  </nav>
+  <div class="scene" id="scene"></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="inv" id="inv"></div>
+</div>
+
+<div class="modal" id="modal" hidden><div class="card" id="modalCard"></div></div>
+
+<script>
+/* ---------- STATO ---------- */
+const S = {
+  room:'navata', inv:[], f:{}, rings:[], started:false
+};
+const ITEMS = {
+  fiammiferi:{ic:'🔥',n:'Fiammiferi',d:'Una scatola di fiammiferi da cucina, mezza piena.'},
+  foglietto:{ic:'📜',n:'Foglietto',d:'note'},
+  santino:{ic:'🖼️',n:'Santino',d:'santino'},
+  asta:{ic:'⚔️',n:'Asta di ferro',d:'Un\'asta di ferro battuto, pesante. Reggeva uno stendardo.'},
+  candela:{ic:'🕯️',n:'Candela accesa',d:'La fiamma trema ma tiene. Nel buio farà luce.'},
+  chiave:{ic:'🗝️',n:'Chiave della torre',d:'Grossa, di ferro, con l\'anello consumato dalle mani di Bartolo.'},
+  appunto:{ic:'✍️',n:'Incisione copiata',d:'tomba'},
+};
+const TARGET = ['G','P','M','P','G','M']; // ✚ ○ □ ○ ✚ □
+const KEY='pieve-escape-v1';
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const j=localStorage.getItem(KEY); if(j){ Object.assign(S, JSON.parse(j)); return true; } }catch(e){} return false; }
+function has(i){ return S.inv.includes(i); }
+function give(i){ if(!has(i)){ S.inv.push(i); renderInv(i); sfx.pick(); save(); } }
+function take(i){ S.inv=S.inv.filter(x=>x!==i); renderInv(); save(); }
+
+/* ---------- AUDIO ---------- */
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+const sfx={
+  tone(f,t=0.12,type='sine',g=0.15){ const a=ac(); if(!a) return; const o=a.createOscillator(), v=a.createGain(); o.type=type; o.frequency.value=f; v.gain.setValueAtTime(g,a.currentTime); v.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t); o.connect(v).connect(a.destination); o.start(); o.stop(a.currentTime+t); },
+  pick(){ sfx.tone(660,.1); setTimeout(()=>sfx.tone(990,.14),80); },
+  click(){ sfx.tone(320,.05,'triangle',.08); },
+  no(){ sfx.tone(140,.25,'sawtooth',.06); },
+  unlock(){ [440,554,659,880].forEach((f,i)=>setTimeout(()=>sfx.tone(f,.25,'triangle',.12),i*90)); },
+  bell(base){
+    const a=ac(); if(!a) return;
+    const t=a.currentTime;
+    // partials of a real bell: hum, prime, tierce, quint, nominal
+    const parts=[[0.5,1.0,6],[1.0,0.8,4.5],[1.19,0.45,3],[1.5,0.35,2.4],[2.0,0.5,1.8],[2.66,0.15,1],[3.0,0.1,.8]];
+    const master=a.createGain(); master.gain.value=0.35; master.connect(a.destination);
+    parts.forEach(([r,amp,dec])=>{
+      const o=a.createOscillator(), g=a.createGain();
+      o.frequency.value=base*r; o.type='sine';
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(amp*0.5,t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dec);
+      o.connect(g).connect(master); o.start(t); o.stop(t+dec+0.1);
+    });
+    const n=a.createBufferSource(); const buf=a.createBuffer(1,a.sampleRate*0.03,a.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length); n.buffer=buf; const ng=a.createGain(); ng.gain.value=.15; n.connect(ng).connect(master); n.start(t);
+  }
+};
+
+/* ---------- UI ---------- */
+const $=s=>document.querySelector(s);
+function say(title,text){ $('#msg').innerHTML=(title?`<strong>${title}</strong>`:'')+text; }
+function renderInv(newId){
+  const el=$('#inv'); el.innerHTML='';
+  S.inv.forEach(id=>{ const it=ITEMS[id]; const b=document.createElement('button'); b.className='item'+(id===newId?' new':''); b.type='button'; b.innerHTML=`<span class="ic">${it.ic}</span>${it.n}`; b.onclick=()=>examine(id); el.appendChild(b); });
+}
+function examine(id){
+  sfx.click();
+  if(id==='foglietto') return showNote();
+  if(id==='santino') return showSantino();
+  if(id==='appunto') return showTomb(true);
+  say(ITEMS[id].n, ITEMS[id].d);
+}
+function openModal(html){ $('#modalCard').innerHTML=html; $('#modal').hidden=false; }
+function closeModal(){ $('#modal').hidden=true; }
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+
+function showNote(){
+  openModal(`<h2>Foglietto del sagrestano</h2>
+  <div class="note">Promemoria per chi resta chiuso dentro (capita).<br><br>
+  Salire in torre e suonare il <b>segnale di Bartolo</b>: il paese lo conosce e viene ad aprire.<br><br>
+  Bartolo lo ha inciso sulla sua tomba, in cripta, ma coi suoi segni: la <b>croce</b> è la Grossa, il <b>quadrato</b> la Mezzana, il <b>cerchio</b> la Piccola.<br><br>
+  La chiave della torre la teneva lui, sotto chi regge le chiavi del cielo.</div>
+  <div class="btnrow"><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
+}
+function showSantino(){
+  openModal(`<h2>Santino</h2><p>Davanti, San Michele. Dietro, a matita, con una grafia da scolaro:</p>
+  <div class="note">Per leggere le lapidi latine:<br>M = 1000 · D = 500 · C = 100<br>L = 50 · X = 10 · V = 5 · I = 1<br>Se un segno più piccolo precede uno più grande, si sottrae (IV = 4, XC = 90).</div>
+  <div class="btnrow"><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
+}
+function showTomb(fromInv){
+  openModal(`<h2>Tomba del campanaro</h2>
+  <div class="epig">BARTOLO<br>CAMPANARO DI QUESTA PIEVE<br>† MDCCCXCII<br><br>IL MIO ULTIMO CANTO<br><span style="font-size:1.6rem;letter-spacing:.35em">✚ ○ □ ○ ✚ □</span></div>
+  ${fromInv?'':'<p style="margin-top:10px">Sei segni, incisi profondi. Li ricopi.</p>'}
+  <div class="btnrow"><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
+  if(!fromInv){ S.f.tomb=true; give('appunto'); }
+}
+function showPlaque(){
+  openModal(`<h2>Lapide della fondazione</h2>
+  <div class="epig">HOC TEMPLVM<br>AEDIFICATVM EST<br>ANNO DOMINI<br><b>MCCLXXXIV</b><br>IN HONOREM S. MICHAELIS</div>
+  <div class="btnrow"><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
+}
+function showHelp(){
+  openModal(`<h2>Come si gioca</h2>
+  <p>Tocca gli oggetti nella scena. Quello che raccogli finisce nelle tasche in basso: toccalo per riguardarlo. Gli oggetti si usano da soli quando servono.</p>
+  <p>Non c'è tempo limite. Le tre stanze sono la navata, la cripta e il campanile.</p>
+  <div class="btnrow"><button class="btn" onclick="hintMode()">Mostra i punti attivi</button><button class="btn" onclick="resetGame()">Ricomincia</button><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
+}
+function hintMode(){ closeModal(); $('#scene').classList.add('hint-mode'); setTimeout(()=>$('#scene').classList.remove('hint-mode'),2500); }
+function resetGame(){ if(confirm('Ricominciare da capo?')){ try{localStorage.removeItem(KEY);}catch(e){} location.reload(); } }
+$('#btnHelp').onclick=showHelp;
+
+/* ---------- COMBINAZIONE ---------- */
+function showCombo(){
+  const d=[0,0,0,0];
+  openModal(`<h2>Cassetto del confessionale</h2><p>Quattro rotelle di ottone. Un numero.</p>
+  <div class="dials" id="dials"></div>
+  <div class="btnrow"><button class="btn" onclick="closeModal()">Lascia</button><button class="btn primary" id="tryCombo">Prova</button></div>`);
+  const box=$('#dials');
+  d.forEach((v,i)=>{ const w=document.createElement('div'); w.className='dial'; w.innerHTML=`<button type="button" aria-label="più">▲</button><div class="v">0</div><button type="button" aria-label="meno">▼</button>`; const [up,val,dn]=w.children; up.onclick=()=>{d[i]=(d[i]+1)%10; val.textContent=d[i]; sfx.click();}; dn.onclick=()=>{d[i]=(d[i]+9)%10; val.textContent=d[i]; sfx.click();}; box.appendChild(w); });
+  $('#tryCombo').onclick=()=>{
+    if(d.join('')==='1284'){ sfx.unlock(); S.f.confess=true; save(); closeModal(); give('fiammiferi'); setTimeout(()=>give('foglietto'),400); say('Il cassetto scatta.','Dentro: una scatola di fiammiferi e un foglietto piegato in quattro.'); render(); }
+    else { sfx.no(); $('#modalCard').classList.add('shake'); setTimeout(()=>$('#modalCard').classList.remove('shake'),450); }
+  };
+}
+
+/* ---------- SCENE ---------- */
+const SC={};
+SC.navata=()=>`
+<svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Navata della pieve">
+<defs>
+ <linearGradient id="wallg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d3f45"/><stop offset="1" stop-color="#6d6f75"/></linearGradient>
+ <linearGradient id="floorg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4022"/><stop offset="1" stop-color="#b8663a"/></linearGradient>
+ <radialGradient id="glow" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#e8a33c" stop-opacity=".55"/><stop offset="1" stop-color="#e8a33c" stop-opacity="0"/></radialGradient>
+ <radialGradient id="rose" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#6c8fd8"/><stop offset=".6" stop-color="#2b4a8f"/><stop offset="1" stop-color="#1c2b4a"/></radialGradient>
+</defs>
+<rect width="360" height="400" fill="url(#wallg)"/>
+<!-- soffitto a capriate -->
+<path d="M0 0 L180 40 L360 0" fill="none" stroke="#2a2418" stroke-width="10"/>
+<path d="M20 0 L180 34 L340 0 M80 0 L180 22 L280 0" fill="none" stroke="#2a2418" stroke-width="5"/>
+<!-- abside -->
+<path d="M110 300 V150 A70 70 0 0 1 250 150 V300 Z" fill="#8a8c92"/>
+<path d="M118 300 V152 A62 62 0 0 1 242 152 V300 Z" fill="#a19f99"/>
+<circle cx="180" cy="128" r="30" fill="url(#rose)"/>
+<g stroke="#101a30" stroke-width="2"><line x1="180" y1="98" x2="180" y2="158"/><line x1="150" y1="128" x2="210" y2="128"/><line x1="159" y1="107" x2="201" y2="149"/><line x1="201" y1="107" x2="159" y2="149"/></g>
+<circle cx="180" cy="128" r="30" fill="none" stroke="#5a5c62" stroke-width="4"/>
+<!-- colonne -->
+<g fill="#9a9ca2"><rect x="60" y="120" width="22" height="180"/><rect x="278" y="120" width="22" height="180"/><rect x="54" y="112" width="34" height="10"/><rect x="272" y="112" width="34" height="10"/></g>
+<g fill="#5f6168"><rect x="60" y="120" width="5" height="180"/><rect x="278" y="120" width="5" height="180"/></g>
+<!-- archi -->
+<path d="M0 130 Q30 60 60 130" fill="none" stroke="#9a9ca2" stroke-width="8"/>
+<path d="M300 130 Q330 60 360 130" fill="none" stroke="#9a9ca2" stroke-width="8"/>
+<!-- pavimento -->
+<rect y="300" width="360" height="100" fill="url(#floorg)"/>
+<g stroke="#7a4022" stroke-width="1.5" opacity=".6"><path d="M0 325 H360 M0 350 H360 M0 375 H360"/><path d="M0 300 L-40 400 M60 300 L20 400 M120 300 L100 400 M180 300 V400 M240 300 L260 400 M300 300 L340 400 M360 300 L400 400"/></g>
+<!-- altare -->
+<g class="hs" data-hs="altare" tabindex="0" role="button" aria-label="Altare con le candele">
+ <ellipse cx="180" cy="260" rx="70" ry="40" fill="url(#glow)" opacity="${has('candela')||S.f.lit?1:0}"/>
+ <rect x="130" y="228" width="100" height="52" rx="3" fill="#d8d0bc"/>
+ <rect x="126" y="224" width="108" height="8" rx="2" fill="#efe6d1"/>
+ <rect x="130" y="236" width="100" height="6" fill="#b6731c" opacity=".7"/>
+ ${[150,180,210].map((x,i)=>`<g><rect x="${x-3}" y="200" width="6" height="26" fill="#f6efe1"/><rect x="${x-7}" y="224" width="14" height="4" fill="#b8963a"/>${S.f.lit?`<ellipse cx="${x}" cy="194" rx="3.5" ry="7" fill="#ffd25e"/><ellipse cx="${x}" cy="196" rx="1.6" ry="4" fill="#fff7d6"/>`:`<line x1="${x}" y1="200" x2="${x}" y2="195" stroke="#2a2418" stroke-width="1.5"/>`}</g>`).join('')}
+ <rect class="ring" x="122" y="186" width="116" height="98" rx="10"/>
+</g>
+<!-- cancello cripta -->
+<g class="hs" data-hs="cripta" tabindex="0" role="button" aria-label="Cancello della cripta">
+ <rect x="236" y="250" width="40" height="52" fill="#15120f"/>
+ <g stroke="#3a3a40" stroke-width="3"><path d="M244 250 V302 M256 250 V302 M268 250 V302 M236 268 H276 M236 286 H276"/></g>
+ <path d="M236 250 Q256 236 276 250" fill="none" stroke="#3a3a40" stroke-width="4"/>
+ <text x="256" y="315" font-size="9" fill="#e9dfc8" text-anchor="middle" font-family="Fraunces,serif">cripta</text>
+ <rect class="ring" x="230" y="238" width="52" height="82" rx="8"/>
+</g>
+<!-- porta torre -->
+<g class="hs" data-hs="torre" tabindex="0" role="button" aria-label="Porta del campanile">
+ <path d="M310 300 V214 A24 24 0 0 1 358 214 V300 Z" fill="#3a2414"/>
+ <path d="M316 300 V216 A18 18 0 0 1 352 216 V300 Z" fill="#5c3a22"/>
+ <g stroke="#3a2414" stroke-width="2"><path d="M325 220 V300 M334 218 V300 M343 220 V300"/></g>
+ <circle cx="347" cy="262" r="3" fill="#b8963a"/>
+ ${S.f.tower?'':'<rect x="330" y="255" width="12" height="14" rx="2" fill="#2a2418"/><circle cx="336" cy="260" r="2.5" fill="#8a8c92"/>'}
+ <rect class="ring" x="304" y="200" width="56" height="106" rx="8"/>
+</g>
+<!-- portone -->
+<g class="hs" data-hs="portone" tabindex="0" role="button" aria-label="Portone della pieve">
+ <path d="M0 310 V190 A32 32 0 0 1 60 190 V310 Z" fill="#2a1a0e"/>
+ <path d="M6 310 V192 A26 26 0 0 1 54 192 V310 Z" fill="#5c3a22"/>
+ <g stroke="#2a1a0e" stroke-width="2"><path d="M30 190 V310 M18 200 V310 M42 200 V310"/></g>
+ <g fill="#8a8c92"><circle cx="25" cy="250" r="2.5"/><circle cx="35" cy="250" r="2.5"/><rect x="8" y="230" width="44" height="3"/><rect x="8" y="280" width="44" height="3"/></g>
+ <rect class="ring" x="-4" y="180" width="70" height="136" rx="8"/>
+</g>
+<!-- lapide -->
+<g class="hs" data-hs="lapide" tabindex="0" role="button" aria-label="Lapide sul muro">
+ <rect x="10" y="130" width="46" height="34" rx="2" fill="#d8d0bc" stroke="#9a9ca2"/>
+ <g stroke="#6e665a" stroke-width="1.2"><path d="M16 138 H50 M16 144 H46 M16 150 H50 M20 156 H46"/></g>
+ <rect class="ring" x="4" y="124" width="58" height="46" rx="6"/>
+</g>
+<!-- confessionale -->
+<g class="hs" data-hs="confessionale" tabindex="0" role="button" aria-label="Confessionale">
+ <rect x="70" y="212" width="52" height="90" fill="#4a2c19"/>
+ <rect x="76" y="220" width="40" height="30" fill="#2a1a0e"/>
+ <g stroke="#7a5230" stroke-width="1.5"><path d="M80 224 V246 M88 224 V246 M96 224 V246 M104 224 V246 M112 224 V246"/></g>
+ <path d="M70 212 L96 196 L122 212" fill="#5c3a22"/>
+ <rect x="80" y="262" width="32" height="12" fill="#5c3a22" stroke="#2a1a0e"/>
+ ${S.f.confess?'<rect x="80" y="262" width="32" height="12" fill="#1c1410"/>':'<rect x="90" y="265" width="12" height="6" rx="1" fill="#b8963a"/>'}
+ <rect class="ring" x="64" y="190" width="64" height="118" rx="8"/>
+</g>
+<!-- panche -->
+<g fill="#5c3a22" stroke="#3a2414"><rect x="90" y="330" width="80" height="12" rx="2"/><rect x="190" y="330" width="80" height="12" rx="2"/><rect x="70" y="356" width="100" height="14" rx="2"/><rect x="190" y="356" width="100" height="14" rx="2"/></g>
+<g class="hs" data-hs="panca" tabindex="0" role="button" aria-label="Panche">
+ <rect x="60" y="322" width="240" height="56" fill="transparent"/>
+ <rect class="ring" x="60" y="322" width="240" height="56" rx="8"/>
+</g>
+<!-- leggio con messale + asta -->
+<g class="hs" data-hs="asta" tabindex="0" role="button" aria-label="Asta di ferro" ${(has('asta')||S.f.stone)?'display="none"':''}>
+ <line x1="292" y1="200" x2="300" y2="300" stroke="#3a3a40" stroke-width="4" stroke-linecap="round"/>
+ <path d="M288 198 L296 190 L300 202 Z" fill="#8a8c92"/>
+ <rect class="ring" x="280" y="184" width="30" height="122" rx="8"/>
+</g>
+<!-- acquasantiera -->
+<g class="hs" data-hs="acquasantiera" tabindex="0" role="button" aria-label="Acquasantiera">
+ <rect x="20" y="330" width="8" height="30" fill="#9a9ca2"/>
+ <path d="M6 326 Q24 342 42 326 Z" fill="#b5b7bd"/>
+ <ellipse cx="24" cy="326" rx="18" ry="5" fill="#2b4a8f"/>
+ <rect class="ring" x="0" y="314" width="48" height="52" rx="8"/>
+</g>
+<!-- corda della campana -->
+<g class="hs" data-hs="corda" tabindex="0" role="button" aria-label="Corda della campana">
+ <line x1="330" y1="0" x2="330" y2="180" stroke="#c8a86a" stroke-width="2.5"/>
+ <rect x="325" y="160" width="10" height="20" rx="3" fill="#a3562f"/>
+ <rect class="ring" x="318" y="60" width="24" height="126" rx="8"/>
+</g>
+</svg>`;
+
+SC.cripta=()=>{
+ if(!has('candela')) return `
+<svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cripta al buio">
+<rect width="360" height="400" fill="#0a0908"/>
+<path d="M120 300 V180 A60 60 0 0 1 240 180 V300" fill="none" stroke="#17140f" stroke-width="12"/>
+<text x="180" y="360" text-anchor="middle" fill="#3a3128" font-family="Fraunces,serif" font-size="16" font-style="italic">buio pesto</text>
+</svg>`;
+ return `
+<svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cripta">
+<defs>
+ <radialGradient id="cl" cx=".5" cy=".95" r=".9"><stop offset="0" stop-color="#e8a33c"/><stop offset=".35" stop-color="#7a5a2a"/><stop offset="1" stop-color="#0a0908"/></radialGradient>
+</defs>
+<rect width="360" height="400" fill="url(#cl)"/>
+<!-- volte -->
+<g fill="none" stroke="#2a2418" stroke-width="6" opacity=".8"><path d="M20 260 V150 A70 70 0 0 1 160 150 V260"/><path d="M200 260 V150 A70 70 0 0 1 340 150 V260"/><path d="M90 200 V110 A90 90 0 0 1 270 110 V200"/></g>
+<g stroke="#4a3c2a" stroke-width="1" opacity=".5">${[...Array(9)].map((_,i)=>`<path d="M0 ${290+i*12} H360"/>`).join('')}</g>
+<!-- tre nicchie -->
+${[[60,'michele','San Michele'],[180,'pietro','San Pietro'],[300,'lucia','Santa Lucia']].map(([x,id,lab])=>`
+<g class="hs" data-hs="${id}" tabindex="0" role="button" aria-label="Statua di ${lab}">
+ <path d="M${x-34} 250 V150 A34 34 0 0 1 ${x+34} 150 V250 Z" fill="#1a1510"/>
+ <path d="M${x-28} 250 V152 A28 28 0 0 1 ${x+28} 152 V250 Z" fill="#2c2419"/>
+ <!-- figura -->
+ <circle cx="${x}" cy="170" r="10" fill="#c9b892"/>
+ <path d="M${x-18} 250 V196 Q${x} 176 ${x+18} 196 V250 Z" fill="#c9b892"/>
+ <path d="M${x-14} 250 V200 Q${x} 186 ${x+14} 200 V250 Z" fill="#a89570"/>
+ ${id==='michele'?`<line x1="${x+16}" y1="160" x2="${x+20}" y2="236" stroke="#e9dfc8" stroke-width="3"/><line x1="${x+11}" y1="176" x2="${x+25}" y2="174" stroke="#8a8c92" stroke-width="3"/>`:''}
+ ${id==='pietro'?`<g stroke="#b8963a" stroke-width="3" fill="none"><circle cx="${x+17}" cy="210" r="5"/><path d="M${x+21} 213 L${x+30} 226 M${x+27} 222 L${x+31} 219"/><circle cx="${x+9}" cy="216" r="4"/><path d="M${x+12} 219 L${x+19} 230"/></g>`:''}
+ ${id==='lucia'?`<ellipse cx="${x+17}" cy="214" rx="9" ry="4" fill="#e9dfc8"/><circle cx="${x+14}" cy="214" r="1.6" fill="#2b4a8f"/><circle cx="${x+20}" cy="214" r="1.6" fill="#2b4a8f"/>`:''}
+ <text x="${x}" y="266" font-size="9" fill="#e9dfc8" text-anchor="middle" font-family="Fraunces,serif">${lab}</text>
+ <rect class="ring" x="${x-38}" y="112" width="76" height="160" rx="10"/>
+</g>`).join('')}
+<!-- pietra smossa sotto Pietro -->
+<g class="hs" data-hs="pietra" tabindex="0" role="button" aria-label="Pietra smossa">
+ <rect x="160" y="272" width="40" height="16" rx="2" fill="${S.f.stone?'#0a0908':'#4a3c2a'}" stroke="#2a2418"/>
+ ${S.f.stone?(S.f.keyTaken?'':'<rect x="170" y="277" width="20" height="6" rx="2" fill="#b8963a"/><circle cx="172" cy="280" r="3" fill="#b8963a"/>'):'<path d="M162 274 L198 286" stroke="#2a2418" stroke-width="1"/>'}
+ <rect class="ring" x="154" y="266" width="52" height="28" rx="6"/>
+</g>
+<!-- tomba di Bartolo -->
+<g class="hs" data-hs="tomba" tabindex="0" role="button" aria-label="Tomba del campanaro">
+ <rect x="90" y="318" width="180" height="60" rx="4" fill="#8a8073"/>
+ <rect x="96" y="324" width="168" height="48" rx="3" fill="#a89b86"/>
+ <text x="180" y="342" font-size="9" fill="#2a2418" text-anchor="middle" font-family="Fraunces,serif" letter-spacing="2">BARTOLO CAMPANARO</text>
+ <text x="180" y="362" font-size="14" fill="#2a2418" text-anchor="middle" letter-spacing="6">✚○□○✚□</text>
+ <rect class="ring" x="84" y="312" width="192" height="72" rx="8"/>
+</g>
+<!-- candela in mano -->
+<g><rect x="326" y="368" width="10" height="26" fill="#f6efe1"/><ellipse cx="331" cy="362" rx="5" ry="10" fill="#ffd25e"/><ellipse cx="331" cy="365" rx="2" ry="5" fill="#fff7d6"/></g>
+</svg>`;
+};
+
+SC.campanile=()=>`
+<svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cella campanaria">
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101a30"/><stop offset="1" stop-color="#2b4a8f"/></linearGradient>
+ <linearGradient id="bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c79a4a"/><stop offset=".5" stop-color="#8a5f22"/><stop offset="1" stop-color="#5a3c14"/></linearGradient>
+</defs>
+<rect width="360" height="400" fill="#5b5148"/>
+<g stroke="#4a4038" stroke-width="1">${[...Array(14)].map((_,i)=>`<path d="M0 ${i*30} H360"/>`).join('')}${[...Array(7)].map((_,i)=>`<path d="M${i*60+(i%2?30:0)} 0 V400" stroke-dasharray="30 30"/>`).join('')}</g>
+<!-- bifore -->
+${[40,320].map(x=>`<g><path d="M${x-30} 300 V120 A30 30 0 0 1 ${x+30} 120 V300 Z" fill="url(#sky)"/><rect x="${x-3}" y="128" width="6" height="172" fill="#9a9ca2"/><circle cx="${x-12}" cy="150" r="1.2" fill="#fff"/><circle cx="${x+15}" cy="180" r="1" fill="#fff"/><circle cx="${x+8}" cy="140" r="1.4" fill="#fff"/></g>`).join('')}
+<circle cx="335" cy="150" r="9" fill="#e9dfc8"/><circle cx="331" cy="147" r="8" fill="#2b4a8f"/>
+<!-- trave -->
+<rect x="0" y="60" width="360" height="26" fill="#5c3a22"/><rect x="0" y="60" width="360" height="5" fill="#7a5230"/>
+<!-- pavimento -->
+<rect y="330" width="360" height="70" fill="#3a2414"/><g stroke="#2a1a0e" stroke-width="2"><path d="M0 348 H360 M0 366 H360 M0 384 H360"/></g>
+<!-- campane -->
+${[['G',180,1.0,'Grossa'],['M',80,.72,'Mezzana'],['P',288,.56,'Piccola']].map(([id,x,s,lab])=>`
+<g class="hs" data-hs="bell${id}" tabindex="0" role="button" aria-label="Campana ${lab}">
+ <g class="swing" id="sw${id}" style="transform-origin:${x}px 86px">
+  <rect x="${x-8}" y="86" width="16" height="${18*s}" fill="#3a2414"/>
+  <g transform="translate(${x} ${86+18*s}) scale(${s})">
+   <path d="M-14 0 Q-16 -6 -8 -8 H8 Q16 -6 14 0 V40 Q14 62 40 78 Q42 84 36 86 H-36 Q-42 84 -40 78 Q-14 62 -14 40 Z" fill="url(#bronze)" stroke="#3a2414" stroke-width="2"/>
+   <path d="M-14 44 Q-2 50 14 44" fill="none" stroke="#e8c98a" stroke-width="2" opacity=".6"/>
+   <circle cx="0" cy="92" r="6" fill="#2a2418"/>
+   <line x1="0" y1="86" x2="0" y2="92" stroke="#2a2418" stroke-width="3"/>
+  </g>
+ </g>
+ <rect x="${x-26}" y="${300-(id==='G'?0:0)}" width="52" height="16" rx="2" fill="#e9dfc8" transform="translate(0 ${id==='G'?-40:-20})"/>
+ <text x="${x}" y="${300+11+(id==='G'?-40:-20)}" font-size="10" fill="#2a2418" text-anchor="middle" font-family="Fraunces,serif">${lab}</text>
+ <rect class="ring" x="${x-48}" y="80" width="96" height="220" rx="12"/>
+</g>`).join('')}
+<!-- targhetta -->
+<g class="hs" data-hs="targa" tabindex="0" role="button" aria-label="Targhetta">
+ <rect x="150" y="340" width="60" height="22" rx="2" fill="#b8963a"/>
+ <text x="180" y="355" font-size="9" fill="#2a2418" text-anchor="middle" font-family="Fraunces,serif">MDCCCXCII</text>
+ <rect class="ring" x="144" y="334" width="72" height="34" rx="6"/>
+</g>
+</svg>`;
+
+/* ---------- INTERAZIONI ---------- */
+const ACT={
+ navata:{
+  lapide(){ showPlaque(); },
+  confessionale(){ if(S.f.confess){ say('Confessionale','Il cassetto è aperto e vuoto. Il legno sa di cera e di segreti.'); } else showCombo(); },
+  panca(){ if(!has('santino')){ give('santino'); say('Sotto una panca','Incastrato tra il legno e il muro, un santino. Qualcuno ci ha scritto dietro.'); } else say('Panche','Legno consumato da secoli di ginocchia. Nient\'altro.'); },
+  altare(){
+    if(S.f.lit){ if(!has('candela')){ give('candela'); say('Altare','Prendi una delle candele accese. La proteggi con la mano.'); } else say('Altare','Le altre candele bruciano piano davanti al tabernacolo.'); return; }
+    if(has('fiammiferi')){ S.f.lit=true; save(); sfx.tone(880,.3,'sine',.08); render(); say('Altare','Un fiammifero, poi tre stoppini. La navata prende un colore caldo. Puoi prendere una candela.'); }
+    else say('Altare','Tre candele spente su una tovaglia ricamata. Ti servirebbe qualcosa per accenderle.');
+  },
+  cripta(){ if(!has('candela')){ say('Cancello della cripta','Il cancello è solo accostato. Sotto, la scala scende in un buio compatto: senza una luce non vedresti nemmeno i gradini.'); } S.room='cripta'; render(); },
+  torre(){
+    if(S.f.tower){ S.room='campanile'; render(); return; }
+    if(has('chiave')){ S.f.tower=true; sfx.unlock(); take('chiave'); save(); say('Porta del campanile','La chiave di Bartolo gira a fatica. La porta si apre su una scala a chiocciola.'); render(); }
+    else { sfx.no(); say('Porta del campanile','Una porticina di quercia, chiusa a chiave. La serratura è enorme e antica.'); }
+  },
+  portone(){ sfx.no(); say('Portone','Spingi, scuoti: niente. Il catenaccio è all\'esterno e il sagrestano è andato a cena. Da qui non si esce.'); },
+  asta(){ give('asta'); say('Asta di ferro','Un\'asta di ferro battuto appoggiata alla colonna: reggeva lo stendardo della processione. Pesante, ma la prendi.'); render(); },
+  acquasantiera(){ say('Acquasantiera','Acqua fresca, un po\' di polvere sul fondo. Ti bagni la fronte: non guasta.'); },
+  corda(){ say('Corda','La corda della Grossa scende dalla torre, ma è legata in alto con un nodo da campanaro: da qui non suona.'); },
+ },
+ cripta:{
+  michele(){ say('San Michele','La spada di pietra è spezzata a metà. Il drago sotto i piedi sembra dormire.'); },
+  lucia(){ say('Santa Lucia','Regge il piatto con gli occhi, come si usa. Ti guarda due volte.'); },
+  pietro(){ say('San Pietro','Le chiavi del cielo, una d\'oro e una d\'argento. Ai suoi piedi una pietra del pavimento sporge appena.'); },
+  pietra(){
+    if(S.f.stone){ if(!S.f.keyTaken){ S.f.keyTaken=true; save(); give('chiave'); render(); say('Sotto la pietra','Avvolta in uno straccio, una chiave di ferro. La chiave della torre.'); } else say('Pietra','Il buco è vuoto.'); return; }
+    if(has('asta')){ S.f.stone=true; save(); take('asta'); sfx.tone(120,.4,'triangle',.15); render(); say('Pietra smossa','Infili l\'asta nella fessura e fai leva. La pietra cede con un rumore secco: sotto c\'è un incavo.'); }
+    else { sfx.no(); say('Pietra smossa','La pietra si muove ma è troppo pesante per le dita. Servirebbe qualcosa per far leva.'); }
+  },
+  tomba(){ showTomb(false); },
+ },
+ campanile:{
+  bellG(){ ring('G'); }, bellM(){ ring('M'); }, bellP(){ ring('P'); },
+  targa(){ say('Targhetta','L\'anno di fusione della Grossa, inciso nell\'ottone. Lo stesso della morte di Bartolo: dicono sia caduto fondendola.'); },
+ }
+};
+const FREQ={G:196,M:261.6,P:329.6};
+function ring(b){
+  sfx.bell(FREQ[b]);
+  const el=document.getElementById('sw'+b); if(el){ el.classList.remove('ring-anim'); void el.offsetWidth; el.classList.add('ring-anim'); }
+  S.rings.push(b); if(S.rings.length>6) S.rings.shift();
+  const names={G:'Grossa',M:'Mezzana',P:'Piccola'};
+  say('Campana '+names[b], 'Rintocchi: '+S.rings.map(x=>names[x][0]).join(' · ')+`<div class="dots">${[...Array(6)].map((_,i)=>`<span class="${i<S.rings.length?'on':''}"></span>`).join('')}</div>`);
+  if(S.rings.length===6){
+    if(S.rings.join('')===TARGET.join('')){ setTimeout(win,900); }
+    else if(S.f.tomb){ setTimeout(()=>{ S.rings=[]; say('Silenzio','I sei rintocchi si spengono sulla valle. Nessuno risponde. Non era il segnale.'); },1200); }
+  }
+  save();
+}
+function win(){
+  S.f.won=true; save();
+  openModal(`<div class="title"><h2>Il paese ha sentito.</h2><p>Dal basso, un catenaccio che scorre e una voce che chiama.</p></div>
+  <p>Il sagrestano è sulla soglia con la lanterna e un pezzo di pane in mano. «Il segnale di Bartolo. Da trent'anni non lo sentivo.» Ti fa strada fuori, nel fresco della sera, senza fare domande.</p>
+  <div class="btnrow"><button class="btn" onclick="closeModal()">Resta ancora un po'</button><button class="btn primary" onclick="resetGame()">Gioca ancora</button></div>`);
+}
+
+function render(){
+  document.querySelectorAll('#nav button').forEach(b=>{ const r=b.dataset.room; b.setAttribute('aria-current', r===S.room?'true':'false'); b.disabled=(r==='campanile'&&!S.f.tower); });
+  $('#scene').innerHTML=SC[S.room]();
+  document.querySelectorAll('.hs').forEach(h=>{ const f=()=>{ ac(); (ACT[S.room][h.dataset.hs]||(()=>{}))(); }; h.addEventListener('click',f); h.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); f(); } }); });
+  save();
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ const r=b.dataset.room; if(r==='cripta'&&!has('candela')){ S.room='cripta'; render(); say('Cripta','Scendi due gradini nel buio e ti fermi. Senza una luce, qui non si combina niente.'); return; } S.room=r; render(); sfx.click(); const intro={navata:'Navata', cripta:'Cripta', campanile:'Cella campanaria'}; const txt={navata:'Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.', cripta:'La candela allarga un cerchio di luce sulle volte basse. Tre statue, una tomba, aria ferma.', campanile:'Tre campane appese a una trave di castagno. Dalle bifore, la valle al buio.'}; if(!(r==='cripta'&&!has('candela'))) say(intro[r],txt[r]); });
+
+/* ---------- AVVIO ---------- */
+function intro(){
+  openModal(`<div class="title"><h2>Chiusi nella Pieve</h2><p>Una sera di settembre, in Garfagnana</p></div>
+  <p>Ti eri seduto sull'ultima panca per riposare le gambe. Quando riapri gli occhi la Pieve di San Michele è vuota, il portone è chiuso e la luce dalle vetrate è quella della sera.</p>
+  <p>Il paese è a mezzo chilometro. Qualcuno dovrà pur sentirti.</p>
+  <div class="btnrow"><button class="btn primary" onclick="closeModal(); startMsg()">Guardati intorno</button></div>`);
+}
+function startMsg(){ ac(); say('Navata','Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.'); }
+const resumed=load();
+if(S.f.won){ S.f.won=false; }
+render(); renderInv();
+if(resumed && (S.inv.length||Object.keys(S.f).length)){ say('Bentornato','Riprendi da dove eri rimasto. Il portone è ancora chiuso.'); }
+else intro();
+</script>
+</body>
+</html>
