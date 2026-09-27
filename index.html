@@ -37,7 +37,7 @@ nav button:disabled{opacity:.45;cursor:default}
 .hs{cursor:pointer}
 .hs:focus-visible{outline:none}
 .hs:focus-visible .ring, .hs:hover .ring{opacity:1}
-.ring{opacity:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:4 4;transition:opacity .2s}
+.ring{opacity:0;fill:none;pointer-events:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:4 4;transition:opacity .2s}
 .hint-mode .ring{opacity:.9}
 .msg{margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:74px;font-size:1rem}
 .msg strong{font-family:Fraunces,serif;font-weight:500;font-size:1.05rem;display:block;margin-bottom:2px}
@@ -425,14 +425,15 @@ SC.cunicolo=()=>`
 <!-- anello a muro -->
 <rect x="330" y="230" width="14" height="24" fill="#5b5148"/><circle cx="337" cy="242" r="5" fill="none" stroke="#8a8c92" stroke-width="3"/>
 <!-- barca -->
-<g id="boat" style="transition:transform 3s ease-in;${S.f.untied?'transform:translateX(-420px)':''}">
+<g id="boat" transform="translate(${S.f.untied?-420:0} 0)">
  <line id="rope" x1="245" y1="292" x2="337" y2="243" stroke="#c8a86a" stroke-width="2.5" ${S.f.untied?'display="none"':''}/>
  <path d="M110 290 Q120 330 180 332 Q240 330 250 290 Z" fill="#5c3a22" stroke="#3a2414" stroke-width="2"/>
  <path d="M116 296 H244" stroke="#7a5230" stroke-width="3"/>
  <rect x="150" y="300" width="60" height="6" fill="#3a2414"/>
  <line x1="230" y1="250" x2="228" y2="300" stroke="#8a7a60" stroke-width="3"/>
  <g class="hs" data-hs="nodo" tabindex="0" role="button" aria-label="Nodo della cima">
-  <circle cx="245" cy="292" r="7" fill="#c8a86a" stroke="#8a6a3a" stroke-width="2" ${S.f.untied?'display="none"':''}/>
+  <rect x="222" y="266" width="50" height="50" fill="transparent"/>
+  <circle id="knot" cx="245" cy="292" r="7" fill="#c8a86a" stroke="#8a6a3a" stroke-width="2" ${S.f.untied?'display="none"':''}/>
   <rect class="ring" x="230" y="276" width="34" height="32" rx="8"/>
  </g>
  <ellipse cx="180" cy="334" rx="72" ry="6" fill="#0d1a33" opacity=".8"/>
@@ -477,7 +478,17 @@ const ACT={
  campanile:{
   bellG(){ ring('G'); }, bellM(){ ring('M'); }, bellP(){ ring('P'); },
   targa(){ say('Targhetta','L\'anno di fusione della Grossa, inciso nell\'ottone. Lo stesso della morte di Bartolo: dicono sia caduto fondendola.'); },
- }
+ },
+ cunicolo:{
+  nodo(){
+    if(S.f.untied) return;
+    S.f.untied=true; save(); sfx.unlock();
+    say('Nodo sciolto','La cima scivola dall\'anello. La corrente prende la barca piano, poi decisa.');
+    ['rope','knot'].forEach(id=>{ const e=document.getElementById(id); if(e) e.setAttribute('display','none'); });
+    const b=document.getElementById('boat'); const t0=performance.now();
+    (function anim(now){ const k=Math.min(1,(now-t0)/3000); const e=k*k*k; if(b) b.setAttribute('transform',`translate(${-420*e} ${Math.sin(k*12)*2})`); if(k<1) requestAnimationFrame(anim); else win(); })(t0);
+  },
+ },
 };
 const FREQ={G:196,M:261.6,P:329.6};
 function ring(b){
