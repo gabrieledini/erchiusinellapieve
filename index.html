@@ -195,7 +195,8 @@ function showHelp(){
   <div class="btnrow"><button class="btn" onclick="hintMode()">Mostra i punti attivi</button><button class="btn" onclick="resetGame()">Ricomincia</button><button class="btn primary" onclick="closeModal()">Chiudi</button></div>`);
 }
 function hintMode(){ closeModal(); $('#scene').classList.add('hint-mode'); setTimeout(()=>$('#scene').classList.remove('hint-mode'),2500); }
-function resetGame(){ if(confirm('Ricominciare da capo?')){ try{localStorage.removeItem(KEY);}catch(e){} location.reload(); } }
+function hardReset(){ try{localStorage.removeItem(KEY);}catch(e){} Object.assign(S,{room:'navata',inv:[],f:{},rings:[]}); closeModal(); render(); renderInv(); intro(); }
+function resetGame(){ openModal(`<h2>Ricominciare da capo?</h2><p>Perderai i progressi salvati.</p><div class="btnrow"><button class="btn" onclick="closeModal()">No</button><button class="btn primary" onclick="hardReset()">Sì, ricomincia</button></div>`); }
 $('#btnHelp').onclick=showHelp;
 
 /* ---------- COMBINAZIONE ---------- */
@@ -513,7 +514,7 @@ function win(){
   S.f.won=true; save();
   openModal(`<div class="title"><h2>La barca si avvia.</h2><p>La pieve resta alle tue spalle, sopra la roccia.</p></div>
   <p>La candela illumina volte basse e acqua nera. Il cunicolo si allarga, poi si biforca. Bartolo diceva che il paese aveva dimenticato questa via: forse anche dove porta.</p>
-  <div class="btnrow"><button class="btn" onclick="resetGame()">Gioca ancora</button><button class="btn primary" onclick="location.href='https://escaperoomlabirinto.netlify.app/'">Prosegui l'avventura</button></div>`);
+  <div class="btnrow"><button class="btn" onclick="hardReset()">Gioca ancora</button><button class="btn primary" onclick="location.href='https://escaperoomlabirinto.netlify.app/'">Prosegui l'avventura</button></div>`);
 }
 
 function render(){
@@ -532,11 +533,12 @@ function intro(){
   <div class="btnrow"><button class="btn primary" onclick="closeModal(); startMsg()">Guardati intorno</button></div>`);
 }
 function startMsg(){ ac(); say('Navata','Colonne di pietra serena, odore di cera. Il portone, dietro di te, è chiuso.'); }
-const resumed=load();
-if(S.f.won){ S.f.won=false; S.f.untied=false; S.room='cunicolo'; }
+let resumed=load();
+if(S.f.won||S.f.untied){ try{localStorage.removeItem(KEY);}catch(e){} Object.assign(S,{room:'navata',inv:[],f:{},rings:[]}); resumed=false; }
 render(); renderInv();
-if(resumed && (S.inv.length||Object.keys(S.f).length)){ say('Bentornato','Riprendi da dove eri rimasto. Il portone è ancora chiuso.'); }
-else intro();
+if(resumed && (S.inv.length||Object.keys(S.f).length)){
+  openModal(`<div class="title"><h2>Bentornato.</h2><p>La pieve è come l'hai lasciata.</p></div><div class="btnrow"><button class="btn" onclick="resetGame()">Ricomincia da capo</button><button class="btn primary" onclick="closeModal(); say('Bentornato','Riprendi da dove eri rimasto. Il portone è ancora chiuso.')">Riprendi</button></div>`);
+} else intro();
 </script>
 </body>
 </html>
